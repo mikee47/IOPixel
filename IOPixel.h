@@ -34,14 +34,14 @@ public:
 		return reinterpret_cast<PixelDevice&>(m_device);
 	}
 
-	ioerror_t parseJson(const JsonObject& json) override;
+	ioerror_t parseJson(JsonObjectConst json) override;
 
-	void getJson(JsonObject& json) const override;
+	void getJson(JsonObject json) const override;
 
 	/*
 	 * We'll get called with NODES_ALL because no nodes are explictly specified.
 	 */
-	bool setNode(devnode_id_t nodeId)
+	bool setNode(devnode_id_t nodeId) override
 	{
 		return (nodeId == NODES_ALL);
 	}
@@ -108,7 +108,7 @@ public:
 	{
 	}
 
-	String classname()
+	String classname() override
 	{
 		return PIXEL_CONTROLLER_CLASSNAME;
 	}
@@ -122,7 +122,7 @@ public:
 	}
 
 private:
-	void execute(IORequest& request);
+	void execute(IORequest& request) override;
 
 	bool m_updating = false; ///< Currently sending update
 };

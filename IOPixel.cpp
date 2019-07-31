@@ -60,14 +60,14 @@ void PixelController::execute(IORequest& request)
 
 /* PixelRequest */
 
-ioerror_t PixelRequest::parseJson(const JsonObject& json)
+ioerror_t PixelRequest::parseJson(JsonObjectConst json)
 {
 	ioerror_t err = IORequest::parseJson(json);
 	if (err)
 		return err;
 
 	for (unsigned i = 0; i < pixp_MAX; ++i) {
-		auto pp = static_cast<PixelParameter>(i);
+		auto pp = PixelParameter(i);
 		String s = *attrNames[pp];
 		if (json.containsKey(s)) {
 			m_parameterValues[pp] = json[s];
@@ -78,12 +78,12 @@ ioerror_t PixelRequest::parseJson(const JsonObject& json)
 	return ioe_success;
 }
 
-void PixelRequest::getJson(JsonObject& json) const
+void PixelRequest::getJson(JsonObject json) const
 {
 	IORequest::getJson(json);
 
 	for (unsigned i = 0; i < pixp_MAX; ++i) {
-		auto pp = static_cast<PixelParameter>(i);
+		auto pp = PixelParameter(i);
 		if (bitRead(m_parameterMask, pp)) {
 			String s = *attrNames[pp];
 			json[s] = m_parameterValues[pp];
@@ -193,7 +193,7 @@ ioerror_t PixelDevice::execute(PixelRequest& request)
 	switch(request.command()) {
 	case ioc_query: {
 		for (unsigned i = 0; i < pixp_MAX; ++i) {
-			auto pp = static_cast<PixelParameter>(i);
+			auto pp = PixelParameter(i);
 			request.setParam(pp, m_values[pp]);
 		}
 		return ioe_success;
@@ -209,7 +209,7 @@ ioerror_t PixelDevice::execute(PixelRequest& request)
 //		break;
 	case ioc_send: {
 		for (unsigned i = 0; i < pixp_MAX; ++i) {
-			auto pp = static_cast<PixelParameter>(i);
+			auto pp = PixelParameter(i);
 			if (request.contains(pp))
 				m_values[pp] = request[pp];
 		}
