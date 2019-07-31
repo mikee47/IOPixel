@@ -1,1 +1,1 @@
-COMPONENT_DEPENDS = Adafruit_NeoPixel
+COMPONENT_DEPENDS = Adafruit_NeoPixel RGBWWLed
