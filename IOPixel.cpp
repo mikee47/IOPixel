@@ -13,13 +13,17 @@
 DEFINE_FSTR(PIXEL_CONTROLLER_CLASSNAME, "pixel")
 
 // Our device name
-DEFINE_FSTR(PIXEL_DEVICE_NAME, "pixel")
-DEFINE_FSTR(ATTR_GPIO, "gpio")
-DEFINE_FSTR(ATTR_HUE, "hue")
-DEFINE_FSTR(ATTR_SAT, "saturation")
-DEFINE_FSTR(ATTR_BRI, "brightness")
+DEFINE_FSTR_LOCAL(PIXEL_DEVICE_NAME, "pixel")
+DEFINE_FSTR_LOCAL(ATTR_GPIO, "gpio")
+DEFINE_FSTR_LOCAL(ATTR_HUE, "hue")
+DEFINE_FSTR_LOCAL(ATTR_SAT, "saturation")
+DEFINE_FSTR_LOCAL(ATTR_BRI, "brightness")
 
-const FlashString* const attrNames[] PROGMEM = { FSTR_PTR(ATTR_HUE), FSTR_PTR(ATTR_SAT), FSTR_PTR(ATTR_BRI) };
+static const FlashString* const attrNames[] PROGMEM = {
+	FSTR_PTR(ATTR_HUE),
+	FSTR_PTR(ATTR_SAT),
+	FSTR_PTR(ATTR_BRI),
+};
 
 static RGBWWColorUtils colours;
 
@@ -33,7 +37,6 @@ void PixelController::start()
 	IOController::start();
 }
 
-
 /*
  * Inherited classes call this before their own stop() code.
  */
@@ -42,34 +45,31 @@ void PixelController::stop()
 	IOController::stop();
 }
 
-
 void PixelController::execute(IORequest& request)
 {
 	// Apply request to owning device and pend
 	auto req = reinterpret_cast<PixelRequest&>(request);
 	auto err = req.device().execute(req);
-	if (err < 0) {
+	if(err < 0) {
 		debug_e("Request failed, %s", ioerrorString(err).c_str());
 		request.complete(status_error);
-	}
-	else {
+	} else {
 		request.complete(status_success);
 	}
 }
-
 
 /* PixelRequest */
 
 ioerror_t PixelRequest::parseJson(JsonObjectConst json)
 {
 	ioerror_t err = IORequest::parseJson(json);
-	if (err)
+	if(err)
 		return err;
 
-	for (unsigned i = 0; i < pixp_MAX; ++i) {
+	for(unsigned i = 0; i < pixp_MAX; ++i) {
 		auto pp = PixelParameter(i);
 		String s = *attrNames[pp];
-		if (json.containsKey(s)) {
+		if(json.containsKey(s)) {
 			m_parameterValues[pp] = json[s];
 			bitSet(m_parameterMask, pp);
 		}
@@ -82,21 +82,20 @@ void PixelRequest::getJson(JsonObject json) const
 {
 	IORequest::getJson(json);
 
-	for (unsigned i = 0; i < pixp_MAX; ++i) {
+	for(unsigned i = 0; i < pixp_MAX; ++i) {
 		auto pp = PixelParameter(i);
-		if (bitRead(m_parameterMask, pp)) {
+		if(bitRead(m_parameterMask, pp)) {
 			String s = *attrNames[pp];
 			json[s] = m_parameterValues[pp];
 		}
 	}
 }
 
-
 /* PixelDevice */
 
 static ioerror_t createDevice(IOController& controller, IODevice*& device)
 {
-	if (!controller.verifyClass(PIXEL_CONTROLLER_CLASSNAME))
+	if(!controller.verifyClass(PIXEL_CONTROLLER_CLASSNAME))
 		return ioe_bad_controller_class;
 
 	device = new PixelDevice(reinterpret_cast<PixelController&>(controller));
@@ -108,25 +107,24 @@ const device_class_info_t PixelDevice::deviceClass()
 	return {PIXEL_DEVICE_NAME, createDevice};
 }
 
-
 ioerror_t PixelDevice::init(JsonObjectConst config)
 {
 	ioerror_t err = IODevice::init(config);
-	if (err)
+	if(err)
 		return err;
 
-	if (!config.containsKey(ATTR_GPIO))
+	if(!config.containsKey(ATTR_GPIO))
 		return ioe_bad_param;
 	int gpio = config[ATTR_GPIO];
 
 	int count = config[ATTR_COUNT];
-	if (count == 0)
+	if(count == 0)
 		return ioe_bad_param;
 
 	debug_i("Pixel, GPIO = %u, count = %u", gpio, count);
 
 	m_strip = new Adafruit_NeoPixel(count, gpio, NEO_BRG | NEO_KHZ800);
-	if (m_strip == nullptr)
+	if(m_strip == nullptr)
 		return ioe_nomem;
 
 	colours.setColorMode(RGB);
@@ -136,8 +134,6 @@ ioerror_t PixelDevice::init(JsonObjectConst config)
 
 	return ioe_success;
 }
-
-
 
 /*
  * Distribute 24-bit colour along a string of 50 LEDs (150 in groups of 3) at the current brightness level
@@ -149,7 +145,7 @@ void PixelDevice::showTestColours()
 {
 	unsigned n = m_strip->numPixels();
 
-/*
+	/*
 	int r = led(m_brightness);
 	int g = 0;//led(50 * m_brightness / 256);
 	int b = led(m_brightness);
@@ -167,11 +163,11 @@ void PixelDevice::showTestColours()
 	int v = RGBWW_CALC_MAXVAL * constrain(m_values[pixp_brightness], 0, 100) / 100;
 
 	colours.HSVtoRGBrainbow(HSVCT(h, s, v), rgb);
-	for (unsigned i = 0; i < n; ++i) {
+	for(unsigned i = 0; i < n; ++i) {
 		m_strip->setPixelColor(i, rgb.r, rgb.g, rgb.b);
 	}
 
-/*
+	/*
 	int v = m_brightness;
 	for (unsigned i = 0; i < n; ++i) {
 		int h = RGBWW_CALC_HUEWHEELMAX * i / n;
@@ -192,7 +188,7 @@ ioerror_t PixelDevice::execute(PixelRequest& request)
 {
 	switch(request.command()) {
 	case ioc_query: {
-		for (unsigned i = 0; i < pixp_MAX; ++i) {
+		for(unsigned i = 0; i < pixp_MAX; ++i) {
 			auto pp = PixelParameter(i);
 			request.setParam(pp, m_values[pp]);
 		}
@@ -204,13 +200,13 @@ ioerror_t PixelDevice::execute(PixelRequest& request)
 	case ioc_on:
 		m_values[pixp_brightness] = 50;
 		break;
-//	case ioc_adjust:
-//		value += request.code();
-//		break;
+		//	case ioc_adjust:
+		//		value += request.code();
+		//		break;
 	case ioc_send: {
-		for (unsigned i = 0; i < pixp_MAX; ++i) {
+		for(unsigned i = 0; i < pixp_MAX; ++i) {
 			auto pp = PixelParameter(i);
-			if (request.contains(pp))
+			if(request.contains(pp))
 				m_values[pp] = request[pp];
 		}
 		break;
