@@ -19,7 +19,7 @@ DEFINE_FSTR_LOCAL(ATTR_HUE, "hue")
 DEFINE_FSTR_LOCAL(ATTR_SAT, "saturation")
 DEFINE_FSTR_LOCAL(ATTR_BRI, "brightness")
 
-static const FlashString* const attrNames[] PROGMEM = {
+static FSTR_TABLE(attrNames) = {
 	FSTR_PTR(ATTR_HUE),
 	FSTR_PTR(ATTR_SAT),
 	FSTR_PTR(ATTR_BRI),
