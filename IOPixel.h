@@ -38,7 +38,7 @@ public:
 		return reinterpret_cast<PixelDevice&>(m_device);
 	}
 
-	ioerror_t parseJson(JsonObjectConst json) override;
+	IO::Error parseJson(JsonObjectConst json) override;
 
 	void getJson(JsonObject json) const override;
 
@@ -93,8 +93,8 @@ public:
 	}
 
 protected:
-	ioerror_t init(JsonObjectConst config) override;
-	ioerror_t execute(PixelRequest& request);
+	IO::Error init(JsonObjectConst config) override;
+	IO::Error execute(PixelRequest& request);
 	void showTestColours();
 
 private:

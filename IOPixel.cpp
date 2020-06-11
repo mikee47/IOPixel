@@ -52,17 +52,17 @@ void PixelController::execute(IORequest& request)
 	auto err = req.device().execute(req);
 	if(err < 0) {
 		debug_e("Request failed, %s", ioerrorString(err).c_str());
-		request.complete(status_error);
+		request.complete(IO::Status::error);
 	} else {
-		request.complete(status_success);
+		request.complete(IO::Status::success);
 	}
 }
 
 /* PixelRequest */
 
-ioerror_t PixelRequest::parseJson(JsonObjectConst json)
+IO::Error PixelRequest::parseJson(JsonObjectConst json)
 {
-	ioerror_t err = IORequest::parseJson(json);
+	IO::Error err = IORequest::parseJson(json);
 	if(err)
 		return err;
 
@@ -75,7 +75,7 @@ ioerror_t PixelRequest::parseJson(JsonObjectConst json)
 		}
 	}
 
-	return ioe_success;
+	return IO::Error::success;
 }
 
 void PixelRequest::getJson(JsonObject json) const
@@ -93,13 +93,13 @@ void PixelRequest::getJson(JsonObject json) const
 
 /* PixelDevice */
 
-static ioerror_t createDevice(IOController& controller, IODevice*& device)
+static IO::Error createDevice(IOController& controller, IODevice*& device)
 {
 	if(!controller.verifyClass(PIXEL_CONTROLLER_CLASSNAME))
-		return ioe_bad_controller_class;
+		return IO::Error::bad_controller_class;
 
 	device = new PixelDevice(reinterpret_cast<PixelController&>(controller));
-	return device ? ioe_success : ioe_nomem;
+	return device ? IO::Error::success : IO::Error::nomem;
 }
 
 const device_class_info_t PixelDevice::deviceClass()
@@ -107,32 +107,32 @@ const device_class_info_t PixelDevice::deviceClass()
 	return {PIXEL_DEVICE_NAME, createDevice};
 }
 
-ioerror_t PixelDevice::init(JsonObjectConst config)
+IO::Error PixelDevice::init(JsonObjectConst config)
 {
-	ioerror_t err = IODevice::init(config);
+	IO::Error err = IODevice::init(config);
 	if(err)
 		return err;
 
 	if(!config.containsKey(ATTR_GPIO))
-		return ioe_bad_param;
+		return IO::Error::bad_param;
 	int gpio = config[ATTR_GPIO];
 
 	int count = config[ATTR_COUNT];
 	if(count == 0)
-		return ioe_bad_param;
+		return IO::Error::bad_param;
 
 	debug_i("Pixel, GPIO = %u, count = %u", gpio, count);
 
 	m_strip = new Adafruit_NeoPixel(count, gpio, NEO_BRG | NEO_KHZ800);
 	if(m_strip == nullptr)
-		return ioe_nomem;
+		return IO::Error::nomem;
 
 	colours.setColorMode(RGB);
 
 	m_strip->begin();
 	showTestColours();
 
-	return ioe_success;
+	return IO::Error::success;
 }
 
 /*
@@ -184,7 +184,7 @@ void PixelDevice::showTestColours()
 	m_strip->show();
 }
 
-ioerror_t PixelDevice::execute(PixelRequest& request)
+IO::Error PixelDevice::execute(PixelRequest& request)
 {
 	switch(request.command()) {
 	case ioc_query: {
@@ -192,7 +192,7 @@ ioerror_t PixelDevice::execute(PixelRequest& request)
 			auto pp = PixelParameter(i);
 			request.setParam(pp, m_values[pp]);
 		}
-		return ioe_success;
+		return IO::Error::success;
 	}
 	case ioc_off:
 		m_values[pixp_brightness] = 0;
@@ -212,9 +212,9 @@ ioerror_t PixelDevice::execute(PixelRequest& request)
 		break;
 	}
 	default:
-		return ioe_bad_command;
+		return IO::Error::bad_command;
 	}
 
 	showTestColours();
-	return ioe_success;
+	return IO::Error::success;
 }
