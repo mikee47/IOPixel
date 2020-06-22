@@ -52,10 +52,8 @@ void PixelController::execute(IORequest& request)
 	auto err = req.device().execute(req);
 	if(err < 0) {
 		debug_e("Request failed, %s", ioerrorString(err).c_str());
-		request.complete(IO::Status::error);
-	} else {
-		request.complete(IO::Status::success);
 	}
+	request.complete(err);
 }
 
 /* PixelRequest */
