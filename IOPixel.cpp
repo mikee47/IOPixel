@@ -61,8 +61,9 @@ void PixelController::execute(IORequest& request)
 IO::Error PixelRequest::parseJson(JsonObjectConst json)
 {
 	IO::Error err = IORequest::parseJson(json);
-	if(err)
+	if(err) {
 		return err;
+	}
 
 	for(unsigned i = 0; i < pixp_MAX; ++i) {
 		auto pp = PixelParameter(i);
